@@ -1,0 +1,2 @@
+class EndPointNotAvaliable(Exception):
+    pass
