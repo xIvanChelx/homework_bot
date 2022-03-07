@@ -62,7 +62,6 @@ def get_api_answer(current_timestamp):
 
 def check_response(response):
     """Проверяем ответ от API."""
-    print(response)
     if not isinstance(response, dict):
         message = 'Ошибка. Ответ от API не словарь.'
         logger.error(message)
@@ -81,35 +80,33 @@ def check_response(response):
 
 def parse_status(homework):
     """Проверяем статус работы."""
-    try:
-        homework.get('homework_name')
-    except KeyError as error:
-        message = f'Ошибка {error}. Отсутствует ключ "homework_name".'
+    homework_name = homework.get('homework_name')
+    if homework_name is None:
+        message = 'Ошибка. Отсутствует ключ "homework_name".'
         logger.error(message)
-    else:
-        homework_name = homework.get('homework_name')
-    try:
-        homework.get('status')
-    except KeyError as error:
-        message = f'Ошибка {error}. Отсутствует ключ "status".'
+        raise KeyError(message)
+    homework_status = homework.get('status')
+    if homework_status is None:
+        message = 'Ошибка. Отсутствует ключ "status".'
         logger.error(message)
-    else:
-        homework_status = homework.get('status')
-    try:
-        homework_status in HOMEWORK_STATUSES
-    except Exception as error:
-        message = f'Ошибка {error}. Недокументированный статус.'
+        raise KeyError(message)
+    if homework_status not in HOMEWORK_STATUSES:
+        message = 'Ошибка. Недокументированный статус.'
         logger.error(message)
+        raise exceptions.StatusNotInList(message)
     verdict = HOMEWORK_STATUSES[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def check_tokens():
     """Проверяем доступность токенов в переменных окружения."""
-    if PRACTICUM_TOKEN and TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
-        return True
-    else:
-        return False
+    tokens_tuple = (PRACTICUM_TOKEN,
+                    TELEGRAM_TOKEN,
+                    TELEGRAM_CHAT_ID)
+    for token in tokens_tuple:
+        if token is None:
+            return False
+    return True
 
 
 def main():
